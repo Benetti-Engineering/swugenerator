@@ -94,6 +94,8 @@ def parse_signing_option(
     CMS,<private key>,<certificate used to sign>
     RSA,<private key>,<file with password>
     RSA,<private key>
+    RSAPSS,<private key>,<file with password>
+    RSAPSS,<private key>
     PKCS11,<pin>[,<module>,<slot>,<id>]
     CUSTOM,<custom command>
 
@@ -124,16 +126,22 @@ def parse_signing_option(
         # Format : CMS,<private key>,<certificate used to sign>
         else:
             return SWUSignCMS(sign_parms[1], sign_parms[2], None, None, engine, keyform)
-    if cmd == "RSA":
+    if cmd[:3] == "RSA":
         if len(sign_parms) not in (2, 3) or not all(sign_parms):
             raise InvalidSigningOption(
                 "RSA requires private key and an optional password file"
             )
-        # Format : RSA,<private key>,<file with password>
+        if cmd == "RSA":
+            mode = SWUSignRSA.RSAMode.PKCS1
+        elif cmd == "RSAPSS":
+            mode = SWUSignRSA.RSAMode.PSS
+        else:
+            raise InvalidSigningOption(f"Unknown RSA mode: {cmd}")
+        # Format : RSA(PSS),<private key>,<file with password>
         if len(sign_parms) == 3:
-            return SWUSignRSA(sign_parms[1], sign_parms[2])
-        # Format : RSA,<private key>
-        return SWUSignRSA(sign_parms[1], None)
+            return SWUSignRSA(sign_parms[1], sign_parms[2], mode=mode)
+        # Format : RSA(PSS),<private key>
+        return SWUSignRSA(sign_parms[1], None, mode=mode)
     if cmd == "PKCS11":
         # Format : PKCS11,<pin>[,<module>,<slot>,<id>]
         if len(sign_parms) not in range(2, 6) or not all(sign_parms[0:2]):

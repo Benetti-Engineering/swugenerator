@@ -6,6 +6,8 @@ import logging
 import subprocess
 import sys
 
+from enum import Enum
+
 
 class SWUSign:
     def __init__(self):
@@ -85,16 +87,31 @@ class SWUSignCMS(SWUSign):
 
 
 class SWUSignRSA(SWUSign):
-    def __init__(self, key, passin):
+    class RSAMode(Enum):
+        PKCS1 = "pkcs1"
+        PSS = "pss"
+
+    def __init__(self, key, passin, mode=RSAMode.PKCS1):
         super().__init__()
         self.type = "RSA"
         self.key = key
         self.passin = passin
+        self.mode = mode
+
+    def _get_rsa_mode_args(self):
+        if self.mode == self.RSAMode.PSS:
+            return ["-sigopt", "rsa_padding_mode:pss",
+                    "-sigopt", "rsa_pss_saltlen:-2"]
+        elif self.mode == self.RSAMode.PKCS1:
+            return []
+        else:
+            raise ValueError(f"Unknown or unsupported RSA mode: {self.mode}")
 
     def prepare_cmd(self, sw_desc_in, sw_desc_sig):
         self.signcmd = (
             ["openssl", "dgst", "-sha256", "-sign", self.key]
             + self.get_passwd_file_args()
+            + self._get_rsa_mode_args()
             + ["-out", sw_desc_sig, sw_desc_in]
         )
 
