@@ -18,6 +18,16 @@ class MagicException(Exception):
 class FormatException(Exception):
     pass
 
+def _major(device):
+    if device == 0:
+        return 0
+    return os.major(device)
+
+def _minor(device):
+    if device == 0:
+        return 0
+    return os.minor(device)
+
 class SWUFile:
     def __init__(self, file):
         """
@@ -108,10 +118,10 @@ class SWUFile:
                 statres.st_nlink,
                 0,  # mtime
                 statres.st_size,
-                os.major(statres.st_dev),
-                os.minor(statres.st_dev),
-                os.major(statres.st_rdev),
-                os.minor(statres.st_rdev),
+                _major(statres.st_dev),
+                _minor(statres.st_dev),
+                _major(statres.st_rdev),
+                _minor(statres.st_rdev),
                 # Yes, length including last zero byte
                 len(base_filename) + 1,
                 # New CRC Format
