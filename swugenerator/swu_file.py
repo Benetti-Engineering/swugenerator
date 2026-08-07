@@ -110,6 +110,8 @@ class SWUFile:
             statres = os.stat(cpio_filename)
             crc = self.cpiocrc(cpio_filename)
             base_filename = os.path.basename(cpio_filename)
+            st_dev = statres.st_dev if os.name == "posix" else 0
+            st_rdev = statres.st_rdev if os.name == "posix" else 0
             fields = [
                 self.next_renumbered_inode(),
                 statres.st_mode,
@@ -118,10 +120,10 @@ class SWUFile:
                 statres.st_nlink,
                 0,  # mtime
                 statres.st_size,
-                _major(statres.st_dev),
-                _minor(statres.st_dev),
-                _major(statres.st_rdev),
-                _minor(statres.st_rdev),
+                _major(st_dev),
+                _minor(st_dev),
+                _major(st_rdev),
+                _minor(st_rdev),
                 # Yes, length including last zero byte
                 len(base_filename) + 1,
                 # New CRC Format
