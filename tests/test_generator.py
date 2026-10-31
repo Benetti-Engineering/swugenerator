@@ -40,10 +40,11 @@ def test_functions_missing_artifact(generator, function):
         generator._exec_functions()  # pylint: disable=protected-access
 
 
-def build(tmp_path, images, dirs=None):
+def build(tmp_path, images, dirs=None, extra=""):
     """Builds a SWU with the images and returns its files and sw-description"""
     (tmp_path / "sw-description").write_text(
-        'software = { version = "1.0"; images: ( ' + ", ".join(images) + " ); };\n"
+        'software = { version = "1.0"; ' + extra
+        + "images: ( " + ", ".join(images) + " ); };\n"
     )
     gen = SWUGenerator(
         tmp_path / "sw-description", tmp_path / "out.swu", {}, dirs or [tmp_path],
@@ -83,3 +84,13 @@ def test_plain_filename(tmp_path):
 
     assert files == ["sw-description", "image.bin.zlib"]
     assert swdesc.software.images[0].filename == "image.bin.zlib"
+
+
+def test_escaped_backslash_in_template(tmp_path):
+    # an escaped backslash before n or t is kept, \t after it is a tab
+    (tmp_path / "image.bin").write_bytes(b"0123456789")
+    _, swdesc = build(
+        tmp_path, ['{ filename = "image.bin"; }'],
+        extra=r'embedded-script = "print(\"a\\nb\\\\\tc\")";',
+    )
+    assert swdesc.software["embedded-script"] == r'print("a\nb\\' + "\t" + r'c")'

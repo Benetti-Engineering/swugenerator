@@ -333,12 +333,12 @@ class SWUGenerator:
         else:
             swdesc = libconf.dumps(self.conf)
 
-            # libconf mishandle special character if they are part
-            # of an attribute. This happens to the embedded-script
-            # and the script results to be in just one line.
-            # Reinsert \n and \t that was removed by libconf
-            swdesc = re.sub(r"\\n", "\n", swdesc)
-            swdesc = re.sub(r"\\t", "\t", swdesc)
+            # libconf writes newlines and tabs in a string as \n and \t,
+            # and an embedded-script results in a single line. Write them
+            # as they are, as libconfig accepts them in a string, but not
+            # a "\\n" or "\\t" for an escaped backslash followed by n or t
+            swdesc = re.sub(r"(?<!\\)((?:\\\\)*)\\n", "\\1\n", swdesc)
+            swdesc = re.sub(r"(?<!\\)((?:\\\\)*)\\t", "\\1\t", swdesc)
 
         swdesc_filename = os.path.join(self.temp.name, sw.filename)
         self.save_swdescription(swdesc_filename, swdesc)
