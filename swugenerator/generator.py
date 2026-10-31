@@ -37,6 +37,7 @@ class SWUGenerator:
         no_hash=False,
         extra_files=None,
         keep_names=False,
+        embedded_scripts=None,
     ):
         self.swdescription = template
         # encrypted artifacts keep their name, without .enc
@@ -60,6 +61,8 @@ class SWUGenerator:
         self.nohash = no_hash
         # files packed as they are, even if sw-description does not use them
         self.extra_files = list(extra_files or [])
+        # Lua files joined into the embedded-script of sw-description
+        self.embedded_scripts = list(embedded_scripts or [])
         self.is_json = False
 
     @staticmethod
@@ -288,6 +291,41 @@ class SWUGenerator:
             logging.debug("Extra file %s", name)
             self.artifacts.append(extra)
 
+    @staticmethod
+    def _has_key(node, key):
+        if isinstance(node, dict):
+            return key in node or any(
+                SWUGenerator._has_key(v, key) for v in node.values()
+            )
+        if isinstance(node, (tuple, list)):
+            return any(SWUGenerator._has_key(v, key) for v in node)
+        return False
+
+    def add_embedded_script(self):
+        """Joins the Lua files into the embedded-script of sw-description"""
+        if not self.embedded_scripts:
+            return
+        # SWUpdate takes one script only: do not hide one of the template
+        if self._has_key(self.conf, "embedded-script"):
+            logging.critical(
+                "sw-description has already an embedded-script, "
+                "it cannot be added from files"
+            )
+            sys.exit(1)
+        script = ""
+        for name in self.embedded_scripts:
+            try:
+                with open(name, "r", encoding="utf-8") as f:
+                    code = f.read()
+            except (OSError, UnicodeDecodeError) as error:
+                logging.critical("Cannot read embedded script %s: %s", name, error)
+                sys.exit(1)
+            if code and not code.endswith("\n"):
+                code += "\n"
+            script += code
+        # quotes and backslashes are escaped when sw-description is written
+        self.conf["software"]["embedded-script"] = script
+
     def save_swdescription(self, filename, contents):
         with open(filename, "w", encoding="utf-8") as swd:
             swd.write(contents)
@@ -313,6 +351,7 @@ class SWUGenerator:
         if "software" not in self.conf:
             logging.critical("sw-description has no software block")
             sys.exit(1)
+        self.add_embedded_script()
         self.find_files_in_swdesc(self.conf["software"])
 
         sw = Artifact("sw-description")

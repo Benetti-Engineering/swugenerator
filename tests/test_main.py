@@ -317,6 +317,8 @@ VALID_COMMANDS = [
             "create",
         ]
     ),
+    (["-s", "sw-description", "-o", "test.swu", "--embedded-script", "a.lua",
+      "--embedded-script", "b.lua", "create"]),
     (["-k", "CUSTOM,foo", "-o", "test.swu", "sign", "-i", "in.swu"]),
     (["-o", "test.mender", "mender", "-i", "in.swu", "-D", "board"]),
     (["-o", "test.mender", "mender", "-i", "in.swu", "-D", "a", "-D", "b",
@@ -350,6 +352,7 @@ INVALID_COMMANDS = [
     (["-i", "in.swu", "-o", "test.swu", "sign"]),
     (["-o", "test.swu", "sign", "-i", "in.swu"]),
     (["-o", "test.swu", "create"]),
+    (["-s", "sw-description", "-o", "test.swu", "--embedded-script", "create"]),
     (["-o", "sign", "-i", "in.swu"]),
     (["-o", "test.mender", "mender"]),
     (["-o", "test.mender", "mender", "-i", "in.swu"]),

@@ -261,6 +261,7 @@ def create_swu(args: argparse.Namespace) -> None:
         args.no_hash,
         args.add_file,
         args.keep_names,
+        args.embedded_script,
     )
     try:
         swu.process()
@@ -422,6 +423,15 @@ def parse_args(args: List[str]) -> None:
         default=[],
         help="file searched in the artifactory and added to the SWU as it is, "
         "even if sw-description does not use it, can be repeated",
+    )
+
+    parser.add_argument(
+        "--embedded-script",
+        action="append",
+        default=[],
+        type=lambda p: Path(p).resolve(),
+        help="Lua file put into sw-description as embedded-script, can be "
+        "repeated: the files are joined in the given order",
     )
 
     parser.add_argument(

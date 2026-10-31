@@ -33,6 +33,9 @@ optional arguments:
   --keep-names          Store encrypted artifacts under their name, without
                         the suffix .enc in the SWU and in sw-description
   -y, --no-hash         Do not store sha256 hash in sw-description
+  --embedded-script EMBEDDED_SCRIPT
+                        Lua file put into sw-description as embedded-script,
+                        can be repeated: the files are joined in the given order
   -k SIGN, --sign SIGN  RSA key or certificate to sign the SWU
   -s SW_DESCRIPTION, --sw-description SW_DESCRIPTION
                         sw-description template for the create command
@@ -100,6 +103,20 @@ Extra files
 Only the files that sw-description uses are packed. ``--add-file <name>`` (can be
 repeated) adds a file found in the artifactory as it is, even if sw-description does
 not use it; a file already in the SWU is not added twice.
+
+Embedded script
+---------------
+
+``--embedded-script <file.lua>`` (can be repeated) puts Lua code into sw-description
+as ``embedded-script``, so it is written as a normal Lua file and not escaped by
+hand. The files are joined in the given order into one script, double quotes and
+backslashes are escaped as libconfig and JSON require. The script is set in the
+``software`` block; a template that has already an ``embedded-script`` is refused::
+
+    swugenerator -o output.swu -a . -s sw-description.in \
+        --embedded-script common.lua --embedded-script board.lua create
+
+Variables of the configuration file are not replaced in the Lua files.
 
 Files of 4 GiB and more
 -----------------------
